@@ -1,20 +1,33 @@
 # Tutorial: Criando um Servidor TCP Simples em Python
 
-## Informações gerais
-- **Público alvo**: alunos da disciplina de SO (Sistemas Operacionais) do curso de TADS (Superior em Tecnologia em Análise e Desenvolvimento de Sistemas) no CNAT-IFRN (Instituto Federal de Educação, Ciência e Tecnologia do Rio Grande do Norte - Campus Natal-Central).
+## Informações Gerais
+- **Público-alvo**: Alunos da disciplina de Sistemas Operacionais (SO) do curso de TADS no CNAT-IFRN.
 - **Disciplina**: Sistemas Operacionais (SO)
 - **Professor**: [Leonardo A. Minora](https://github.com/leonardo-minora)
 - **Texto gerado pelo**: [Microsoft Copilot](https://copilot.microsoft.com/)
 
 ## Sumário
-1. Servidor TCP sem thread
-2. Experimento 1 - usando thread no servidor
-3. Experimento 2 - usando containers
+1. Introdução
+2. Servidor TCP sem thread
+3. Experimento 1 - Uso de Threads no Servidor
+4. Experimento 2 - Uso de Containers
+5. Comparativo de Desempenho
+6. Conclusão
 
 ---
 
-## 1. Servidor TCP sem thread
-Este tutorial apresenta um servidor TCP básico sem uso de threads, explicando sua implementação e comportamento ao lidar com várias conexões simultâneas.
+## 1. Introdução
+Este tutorial apresenta a implementação e a análise de um servidor TCP básico, explorando diferentes abordagens para lidar com múltiplas conexões simultâneas. Serão abordadas três formas de execução:
+- Servidor TCP sem threads.
+- Servidor TCP com threads.
+- Servidor TCP executando em containers Docker.
+
+O objetivo é compreender as vantagens e limitações de cada abordagem e avaliar seu desempenho.
+
+---
+
+## 2. Servidor TCP sem Thread
+Nesta primeira abordagem, o servidor processa uma conexão por vez, sem suporte para múltiplas conexões simultâneas.
 
 ### Passos para executar o experimento:
 1. Criar e executar o servidor TCP sem thread.
@@ -26,10 +39,9 @@ Este tutorial apresenta um servidor TCP básico sem uso de threads, explicando s
 ```python
 import socket
 
-HOST = ""  # Endereço IP do servidor (vazio para aceitar conexões de qualquer endereço)
-PORT = 8000  # Porta do servidor
+HOST = ""
+PORT = 8000
 
-# Criando o socket do servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORT))
 servidor.listen(1)
@@ -46,10 +58,10 @@ while True:
 
 ---
 
-## 2. Experimento 1 - Uso de Threads no Servidor
-Neste experimento, analisaremos o desempenho do servidor sem e com threads, comparando os tempos de resposta em diferentes cenários.
+## 3. Experimento 1 - Uso de Threads no Servidor
+Neste experimento, implementamos um servidor que usa threads para lidar com múltiplas conexões simultâneas.
 
-### Passos do Experimento
+### Passos do Experimento:
 1. Executar o servidor sem thread.
 2. Executar o cliente TCP para testar com:
    - 1 cliente
@@ -69,7 +81,6 @@ import threading
 HOST = ""
 PORT = 8000
 
-# Criando o socket do servidor
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORT))
 servidor.listen(5)
@@ -88,26 +99,12 @@ while True:
     thread.start()
 ```
 
-### Implementação do Cliente TCP
-```python
-import socket
-
-def fazer_requisicao():
-    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    cliente.connect(("localhost", 8000))
-    resposta = cliente.recv(1024)
-    print("Resposta do servidor:", resposta.decode("utf-8"))
-    cliente.close()
-
-fazer_requisicao()
-```
-
 ---
 
-## 3. Experimento 2 - Uso de Containers
-Neste experimento, usaremos Docker para executar o servidor TCP em um container, avaliando o impacto no desempenho e na gestão de processos.
+## 4. Experimento 2 - Uso de Containers
+Neste experimento, utilizamos Docker para executar o servidor TCP dentro de um container.
 
-### Passos do Experimento
+### Passos do Experimento:
 1. Criar um `Dockerfile` para o servidor TCP.
 2. Construir a imagem Docker.
 3. Executar o container do servidor.
@@ -142,8 +139,23 @@ CMD ["python", "servidor.py"]
 3. **Testar o servidor**:
    - Execute o cliente TCP para conectar ao servidor dentro do container.
 
-### Conclusão
-O uso de threads melhora a capacidade do servidor de lidar com múltiplos clientes simultaneamente. A execução em containers facilita a distribuição e a escalabilidade, mas pode introduzir uma pequena latência devido à abstração do ambiente.
+---
+
+## 5. Comparativo de Desempenho
+| Modo de Execução | Tempo de Resposta (médio) | Suporte a Clientes Simultâneos |
+|-------------------|--------------------|----------------------------|
+| Sem Thread       | Alto               | Baixo                      |
+| Com Thread      | Médio              | Alto                       |
+| Em Container     | Variável           | Alto                       |
+
+- **Servidor Sem Thread**: Rápido para conexões individuais, mas sofre com múltiplos clientes.
+- **Servidor com Thread**: Melhor para múltiplas conexões simultâneas.
+- **Servidor em Container**: Oferece flexibilidade e escalabilidade, mas pode ter pequena latência.
+
+---
+
+## 6. Conclusão
+O uso de threads melhora significativamente a capacidade do servidor de lidar com múltiplos clientes. A execução em containers é útil para distribuição e escalabilidade, embora introduza um pequeno overhead. A escolha da abordagem depende do cenário e dos requisitos da aplicação.
 
 ---
 
