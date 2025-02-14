@@ -2,239 +2,151 @@
 
 ## Informações gerais
 - **Público alvo**: alunos da disciplina de SO (Sistemas Operacionais) do curso de TADS (Superior em Tecnologia em Análise e Desenvolvimento de Sistemas) no CNAT-IFRN (Instituto Federal de Educação, Ciência e Tecnologia do Rio Grande do Norte - Campus Natal-Central).
-- disciplina: **SO** Sistemas Operacionais
-- professor: [Leonardo A. Minora](https://github.com/leonardo-minora)
-- texto gerado pelo [Microsoft Copilot](https://copilot.microsoft.com/)
+- **Disciplina**: Sistemas Operacionais (SO)
+- **Professor**: [Leonardo A. Minora](https://github.com/leonardo-minora)
+- **Texto gerado pelo**: [Microsoft Copilot](https://copilot.microsoft.com/)
 
 ## Sumário
-1. Servidor HTTP sem thread
+1. Servidor TCP sem thread
 2. Experimento 1 - usando thread no servidor
-2. Experimento 2 - usando containeres
+3. Experimento 2 - usando containers
 
-### 1. Servidor HTTP sem thread
+---
 
+## 1. Servidor TCP sem thread
+Este tutorial apresenta um servidor TCP básico sem uso de threads, explicando sua implementação e comportamento ao lidar com várias conexões simultâneas.
 
-### 2. Experimento 1
-1. executar o servidor http, código abaixo **sem thread**, subseção 2.1.
-2. executar cliente, código abaixo, subseção 2.3.
-   1. apenas 1 cliente
-   2. 2 clientes simultâneos
-   3. 5 clientes simultâneos
-   4. 10 cliente simultâneos
-3. analizar e explicar o comportamento do cliente e do **servidor sem thread** para cada um dos 4 casos acima
-4. parar servidor sem thread e executar o servidor http, código abaixo **com thread**, subseção 2.2.
-5. executar cliente, código abaixo, subseção 2.3.
-   1. apenas 1 cliente
-   2. 2 clientes simultâneos
-   3. 5 clientes simultâneos
-   4. 10 cliente simultâneos
-6. analizar e explicar o comportamento do cliente e do **servidor com thread** para cada um dos 4 casos acima
-7. se tiver diferença no funcionamento dos servidores **sem** e **com** threads, analisar a diferença
+### Passos para executar o experimento:
+1. Criar e executar o servidor TCP sem thread.
+2. Criar e executar o cliente TCP para se conectar ao servidor.
+3. Testar com diferentes quantidades de clientes simultâneos (1, 2, 5 e 10 clientes).
+4. Observar e documentar o comportamento do servidor ao receber múltiplas conexões.
 
-
-**data da entrega** 13/02/2025
-
-#### 2.1. código servidor sem thread
+### Implementação do Servidor TCP Sem Thread
 ```python
-import http.server
+import socket
 
-# Definir o conteúdo HTML fixo
-html_fixo = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Servidor HTTP Multithread</title>
-</head>
-<body>
-    <h1>Olá, mundo!</h1>
-    <p>Este é um servidor HTTP multithread em Python.</p>
-</body>
-</html>
-"""
+HOST = ""  # Endereço IP do servidor (vazio para aceitar conexões de qualquer endereço)
+PORT = 8000  # Porta do servidor
 
-class MeuManipulador(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        # Imprimir informações da requisição no console
-        print(f"Requisição recebida de: {self.client_address}")
-        print(f"Caminho solicitado: {self.path}")
-        print("Cabeçalhos da requisição:")
-        for nome, valor in self.headers.items():
-            print(f"{nome}: {valor}")
+# Criando o socket do servidor
+servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+servidor.bind((HOST, PORT))
+servidor.listen(1)
 
-        # Enviar resposta de código 200
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        # Enviar o conteúdo HTML fixo
-        self.wfile.write(html_fixo.encode("utf-8"))
+print(f"Servidor TCP rodando na porta {PORT}...")
 
-# Definir o endereço e a porta do servidor
-endereco = ("", 8000)
-
-# Criar o servidor
-with http.server.HTTPServer(endereco, MeuManipulador) as httpd:
-    print("Servidor HTTP rodando na porta 8000...")
-    # Manter o servidor rodando
-    httpd.serve_forever()
-
+while True:
+    conexao, endereco = servidor.accept()
+    print(f"Conexão estabelecida com {endereco}")
+    mensagem = "Olá, cliente! Você está conectado ao servidor TCP."
+    conexao.sendall(mensagem.encode("utf-8"))
+    conexao.close()
 ```
 
-**Explicação do Código**
+---
 
-Este código cria um servidor HTTP simples em Python que responde a requisições GET com um conteúdo HTML fixo. Vamos detalhar cada parte do código:
+## 2. Experimento 1 - Uso de Threads no Servidor
+Neste experimento, analisaremos o desempenho do servidor sem e com threads, comparando os tempos de resposta em diferentes cenários.
 
-1. Importar o Módulo `import http.server`
-  - Fornece classes para criar servidores HTTP.
-2. Define uma string `html_fixo` com conteúdo HTML Fixo `html_fixo = """..."""`
-3. Criar a Classe Manipuladora de Requisições `class MeuManipulador(http.server.SimpleHTTPRequestHandler): ...`
-  - **Classe `MeuManipulador`**: Herda de `http.server.SimpleHTTPRequestHandler` e sobrescreve o método `do_GET` para tratar requisições GET.
-  - **Método `do_GET`**:
-    - **Imprimir Informações da Requisição**: Imprime no console o endereço IP do cliente (`self.client_address`), o caminho solicitado (`self.path`) e os cabeçalhos da requisição (`self.headers`).
-    - **Enviar Resposta de Código 200**: Usa `self.send_response(200)` para enviar uma resposta de código 200 (OK).
-    - **Definir o Cabeçalho `Content-type`**: Usa `self.send_header("Content-type", "text/html")` para definir o tipo de conteúdo como HTML.
-    - **Finalizar os Cabeçalhos**: Usa `self.end_headers()` para finalizar os cabeçalhos da resposta.
-    - **Enviar o Conteúdo HTML Fixo**: Usa `self.wfile.write(html_fixo.encode("utf-8"))` para enviar o conteúdo HTML fixo como resposta.
-4. Definir o Endereço e a Porta do Servidor `endereco = ("", 8000)`
-   - Define o endereço e a porta do servidor. Neste caso, o servidor escuta em todas as interfaces (`""`) na porta 8000.
-5. Criar e Executar o Servidor `with http.server.HTTPServer(endereco, MeuManipulador) as httpd: ...`
-   - **Criar o Servidor**: Usa `http.server.HTTPServer(endereco, MeuManipulador)` para criar uma instância do servidor HTTP, passando o endereço e a classe manipuladora.
-   - **Bloco `with`**: Garante que o servidor seja fechado corretamente ao final.
-   - **Manter o Servidor Rodando**: Usa `httpd.serve_forever()` para manter o servidor rodando indefinidamente, pronto para tratar requisições.
+### Passos do Experimento
+1. Executar o servidor sem thread.
+2. Executar o cliente TCP para testar com:
+   - 1 cliente
+   - 2 clientes simultâneos
+   - 5 clientes simultâneos
+   - 10 clientes simultâneos
+3. Analisar e explicar o comportamento do servidor sem thread.
+4. Parar o servidor sem thread e executar a versão com thread.
+5. Repetir os testes com diferentes quantidades de clientes.
+6. Comparar e discutir as diferenças observadas.
 
-
-#### 2.2. código servidor com thread
+### Implementação do Servidor TCP com Thread
 ```python
-import http.server
-import socketserver
-from socketserver import ThreadingMixIn
+import socket
+import threading
 
-# Definir o conteúdo HTML fixo
-html_fixo = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Servidor HTTP Multithread</title>
-</head>
-<body>
-    <h1>Olá, mundo!</h1>
-    <p>Este é um servidor HTTP multithread em Python.</p>
-</body>
-</html>
-"""
+HOST = ""
+PORT = 8000
 
-class MeuManipulador(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        # Imprimir informações da requisição no console
-        print(f"Requisição recebida de: {self.client_address}")
-        print(f"Caminho solicitado: {self.path}")
-        print("Cabeçalhos da requisição:")
-        for nome, valor in self.headers.items():
-            print(f"{nome}: {valor}")
+# Criando o socket do servidor
+servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+servidor.bind((HOST, PORT))
+servidor.listen(5)
 
-        # Enviar resposta de código 200
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        # Enviar o conteúdo HTML fixo
-        self.wfile.write(html_fixo.encode("utf-8"))
+print(f"Servidor TCP multithread rodando na porta {PORT}...")
 
-class ThreadingHTTPServer(ThreadingMixIn, http.server.HTTPServer):
-    """Servidor HTTP que trata cada requisição em uma nova thread."""
-    daemon_threads = True
-
-# Definir o endereço e a porta do servidor
-endereco = ("", 8000)
-
-# Criar o servidor
-with ThreadingHTTPServer(endereco, MeuManipulador) as httpd:
-    print("Servidor HTTP multithread rodando na porta 8000...")
-    # Manter o servidor rodando
-    httpd.serve_forever()
-
-```
-
-**Explicação do código**
-
-1. **Importar Módulos**:
-   - Importamos os módulos `http.server`, `socketserver` e `ThreadingMixIn`.
-2. **Definir o Conteúdo HTML Fixo**:
-   - Definimos uma string `html_fixo` contendo o HTML que será enviado como resposta.
-3. **Criar a Classe Manipuladora**:
-   - Criamos uma classe `MeuManipulador` que herda de `http.server.SimpleHTTPRequestHandler`.
-   - Sobrescrevemos o método `do_GET` para tratar requisições GET, imprimir informações da requisição no console e enviar o conteúdo HTML fixo.
-4. **Criar a Classe do Servidor Multithread**:
-   - Criamos uma classe `ThreadingHTTPServer` que herda de `ThreadingMixIn` e `http.server.HTTPServer`.
-   - `ThreadingMixIn` permite que cada requisição seja tratada em uma nova thread.
-   - `daemon_threads = True` garante que as threads daemon sejam encerradas quando o servidor principal for encerrado.
-5. **Definir o Endereço e a Porta do Servidor**:
-   - Definimos o endereço e a porta do servidor. Neste caso, o servidor escuta em todas as interfaces (`""`) na porta 8000.
-6. **Criar e Executar o Servidor**:
-   - Criamos uma instância de `ThreadingHTTPServer` passando o endereço e a classe manipuladora.
-   - Usamos um bloco `with` para garantir que o servidor seja fechado corretamente ao final.
-   - Chamamos `serve_forever` para manter o servidor rodando e pronto para tratar requisições.
-
-
-#### 2.3. código cliente
-```python
-import http.client
-
-def fazer_requisicao_get():
-    # Conectar ao servidor localhost na porta 8000
-    conexao = http.client.HTTPConnection("localhost", 8000)
-
-    # Fazer a requisição GET
-    conexao.request("GET", "/")
-
-    # Obter a resposta
-    resposta = conexao.getresponse()
-
-    # Ler o conteúdo da resposta
-    conteudo = resposta.read()
-
-    # Imprimir o status e o conteúdo da resposta
-    print(f"Status: {resposta.status}")
-    print(f"Motivo: {resposta.reason}")
-    print("Conteúdo:")
-    print(conteudo.decode("utf-8"))
-
-    # Fechar a conexão
+def atender_cliente(conexao, endereco):
+    print(f"Conexão estabelecida com {endereco}")
+    mensagem = "Olá, cliente! Você está conectado ao servidor TCP multithread."
+    conexao.sendall(mensagem.encode("utf-8"))
     conexao.close()
 
-# Chamar a função para fazer a requisição GET
-fazer_requisicao_get()
-
+while True:
+    conexao, endereco = servidor.accept()
+    thread = threading.Thread(target=atender_cliente, args=(conexao, endereco))
+    thread.start()
 ```
 
-**Explicação do código**
+### Implementação do Cliente TCP
+```python
+import socket
 
-1. **Importar o Módulo `http.client`**:
-    - Importamos o módulo `http.client`, que fornece classes para fazer requisições HTTP.
+def fazer_requisicao():
+    cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    cliente.connect(("localhost", 8000))
+    resposta = cliente.recv(1024)
+    print("Resposta do servidor:", resposta.decode("utf-8"))
+    cliente.close()
 
-2. **Definir a Função `fazer_requisicao_get`**:
-    - Criamos uma função para fazer a requisição GET.
+fazer_requisicao()
+```
 
-3. **Conectar ao Servidor**:
-    - Usamos `http.client.HTTPConnection("localhost", 8000)` para conectar ao servidor `localhost` na porta 8000.
+---
 
-4. **Fazer a Requisição GET**:
-    - Usamos `conexao.request("GET", "/")` para fazer a requisição GET para a raiz (`/`) do servidor.
+## 3. Experimento 2 - Uso de Containers
+Neste experimento, usaremos Docker para executar o servidor TCP em um container, avaliando o impacto no desempenho e na gestão de processos.
 
-5. **Obter a Resposta**:
-    - Usamos `conexao.getresponse()` para obter a resposta do servidor.
+### Passos do Experimento
+1. Criar um `Dockerfile` para o servidor TCP.
+2. Construir a imagem Docker.
+3. Executar o container do servidor.
+4. Testar a acessibilidade do servidor dentro e fora do container.
+5. Comparar o desempenho do servidor em ambiente nativo e em container.
 
-6. **Ler o Conteúdo da Resposta**:
-    - Usamos `resposta.read()` para ler o conteúdo da resposta.
+### Implementação do Dockerfile
+Crie um arquivo chamado `Dockerfile` e adicione o seguinte conteúdo:
+```dockerfile
+# Usar imagem base do Python
+FROM python:3.9
 
-7. **Imprimir o Status e o Conteúdo da Resposta**:
-    - Imprimimos o status (`resposta.status`), o motivo (`resposta.reason`) e o conteúdo da resposta (`conteudo.decode("utf-8")`).
+# Copiar o código do servidor para o container
+COPY servidor.py /servidor.py
 
-8. **Fechar a Conexão**:
-    - Usamos `conexao.close()` para fechar a conexão.
+# Definir o diretório de trabalho
+WORKDIR /
 
+# Comando para executar o servidor
+CMD ["python", "servidor.py"]
+```
 
-### 3. Experimento 2
+### Construção e Execução do Container
+1. **Construir a imagem**:
+   ```sh
+   docker build -t servidor-tcp .
+   ```
+2. **Executar o container**:
+   ```sh
+   docker run -p 8000:8000 servidor-tcp
+   ```
+3. **Testar o servidor**:
+   - Execute o cliente TCP para conectar ao servidor dentro do container.
 
+### Conclusão
+O uso de threads melhora a capacidade do servidor de lidar com múltiplos clientes simultaneamente. A execução em containers facilita a distribuição e a escalabilidade, mas pode introduzir uma pequena latência devido à abstração do ambiente.
+
+---
 
 ## Links
-- [http.server — HTTP servers](https://docs.python.org/3/library/http.server.html)
+- [socket — Low-level networking interface](https://docs.python.org/3/library/socket.html)
 
